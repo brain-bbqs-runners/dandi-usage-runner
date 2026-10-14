@@ -1,0 +1,48 @@
+name: Install `s3logextraction` packages
+description: |
+  Install (or upgrade) `s3_log_extraction` and `dandi_s3_log_extraction` into the runner environment.
+  Requires the `ENV_PATH` and `UV_PATH` environment variables to be set.
+
+  Upstream is installed explicitly, rather than left to the downstream dependency, so that its own
+  `geolocation` extra is applied: the downstream extra of the same name only pulls the geolocation
+  dependencies into `dandi_s3_log_extraction` itself.
+
+inputs:
+  flock_file:
+    description: Path to a file to use for flocking, so that installs do not race a running pipeline.
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      name: Check the environment interpreter
+      # `s3_log_extraction` 1.11.2 declares `requires-python = ">=3.14"`; a 3.13 environment must be rebuilt first
+      run: |
+        set -euo pipefail
+        source ${{ env.ENV_PATH }}/bin/activate
+        python -c 'import sys; sys.exit(0 if sys.version_info >= (3, 14) else 1)' || {
+          echo "The environment at ${{ env.ENV_PATH }} runs $(python -V), but s3_log_extraction requires Python 3.14 or newer."
+          echo "Recreate the environment on 3.14 before installing."
+          exit 1
+        }
+
+    - shell: bash
+      name: Install packages into the environment
+      # `dandi_s3_log_extraction` has no PyPI release yet — it publishes on GitHub release and has no tags —
+      # so it is installed from `@main`, which carries dandi/dandi-s3-log-extraction#97.
+      # TODO: switch it to a plain PyPI pin (`dandi_s3_log_extraction[geolocation]>=1.4.2`) once released.
+      run: |
+        set -euo pipefail
+        source ${{ env.ENV_PATH }}/bin/activate
+        flock -n "${{ inputs.flock_file }}" ${{ env.UV_PATH }} pip install --upgrade \
+          "s3_log_extraction[geolocation]>=1.11.2"
+        flock -n "${{ inputs.flock_file }}" ${{ env.UV_PATH }} pip install --upgrade \
+          "dandi_s3_log_extraction[geolocation] @ git+https://github.com/dandi/dandi-s3-log-extraction.git@main"
+
+    - shell: bash
+      name: Report installed versions
+      run: |
+        set -euo pipefail
+        source ${{ env.ENV_PATH }}/bin/activate
+        ${{ env.UV_PATH }} pip show s3_log_extraction dandi_s3_log_extraction | grep -E '^(Name|Version):'

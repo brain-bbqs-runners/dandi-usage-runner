@@ -4,7 +4,7 @@
   <h1 align="center">DANDI Usage (Runner)</h1>
 </p>
 
-GitHub Action-controlled CRON jobs that generate the DANDI access summaries on the self-hosted Typhon runner
+GitHub Action-controlled CRON jobs that extract the DANDI S3 access logs and generate the access summaries on the self-hosted Typhon runner
 (moved from [CodyCBakerPhD/self-hosted-crons](https://github.com/CodyCBakerPhD/self-hosted-crons)).
 The extraction commands and the upload run through
 [CodyCBakerPhD/dandi-s3-logs-action](https://github.com/CodyCBakerPhD/dandi-s3-logs-action) `@v1`,
@@ -12,6 +12,9 @@ and the pre-run check through [CodyCBakerPhD/check-runner-action](https://github
 
 | Workflow | Schedule |
 | --- | --- |
+| Run DANDI log extraction (then a restic snapshot of the cache) | Daily, 00:00 UTC |
+| Update log inventory (`s5cmd sync` of the S3 Inventory the extraction reads) | Sundays, 00:00 UTC |
+| Install DANDI extraction packages | Manual dispatch only |
 | Update DANDI summaries | Sundays, Wednesdays and Saturdays, 06:00 UTC |
 | Update microscopy summaries (DANDI:000108) | Mondays, 06:00 UTC |
 | Update unassociated DANDI summaries | 1st of each month, 03:00 UTC |
@@ -29,5 +32,9 @@ Repository secrets:
 
 - `S3_LOG_EXTRACTION_PASSWORD`
 - `MAXMIND_ACCOUNT_ID` / `MAXMIND_LICENSE_KEY`
+- `IPS_TO_SKIP` (optional, for the extraction)
 - `_GITHUB_API_KEY` (token able to list this repository's runners, for the pre-run check)
 - `MAIL_USERNAME` / `MAIL_PASSWORD` (failure notifications)
+
+The inventory sync and the restic snapshot use what the runner's host already has: its own AWS credentials for
+`s3://dandiarchive-inventory`, and `snapshots/restic` with its password file under `DANDI_S3_LOG_BASE_PATH`.
