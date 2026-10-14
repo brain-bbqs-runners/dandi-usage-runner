@@ -4,7 +4,8 @@ Runner for the DANDI Usage stats.
 GitHub Action-controlled CRON jobs that generate the DANDI access summaries on the self-hosted Typhon runner
 (moved from [CodyCBakerPhD/self-hosted-crons](https://github.com/CodyCBakerPhD/self-hosted-crons)).
 The extraction commands and the upload run through
-[CodyCBakerPhD/dandi-s3-logs-action](https://github.com/CodyCBakerPhD/dandi-s3-logs-action) `@v1`.
+[CodyCBakerPhD/dandi-s3-logs-action](https://github.com/CodyCBakerPhD/dandi-s3-logs-action) `@v1`,
+and the pre-run check through [CodyCBakerPhD/check-runner-action](https://github.com/CodyCBakerPhD/check-runner-action) `@v1`.
 
 | Workflow | Schedule |
 | --- | --- |

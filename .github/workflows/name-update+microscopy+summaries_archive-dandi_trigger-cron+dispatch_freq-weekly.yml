@@ -22,17 +22,14 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     steps:
-      - uses: actions/checkout@v6
-
       - name: Validate required variables
         run: |
           [ -n "${{ vars.DANDI_S3_LOG_BASE_PATH }}" ] || { echo "Repository variable DANDI_S3_LOG_BASE_PATH must be set."; exit 1; }
           [ -n "${{ vars.S3LOGS_ENV_NAME }}" ] || { echo "Repository variable S3LOGS_ENV_NAME must be set."; exit 1; }
 
       - name: Cancel if offline
-        uses: ./.github/actions/check-runner
+        uses: CodyCBakerPhD/check-runner-action@v1
         with:
-          org: brain-bbqs-runners/dandi-usage-runner
           labels: typhon,dandi
           token: ${{ secrets._GITHUB_API_KEY }}
 
@@ -43,9 +40,6 @@ jobs:
     timeout-minutes: 1600
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
       - name: Update microscopy summaries
         uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v1
         with:

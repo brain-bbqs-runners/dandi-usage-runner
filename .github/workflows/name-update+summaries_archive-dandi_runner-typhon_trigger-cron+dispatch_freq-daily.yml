@@ -11,8 +11,6 @@ concurrency:
 
 env:
   S3_LOG_BASE_PATH: ${{ vars.DANDI_S3_LOG_BASE_PATH }}
-  CONDA_BASE_PATH: ${{ format('{0}/conda', vars.DANDI_S3_LOG_BASE_PATH) }}
-  CONDA_ENV_NAME: "name-s3+logs+processing_py-3+13_env"
   ENV_PATH: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/${{ vars.S3LOGS_ENV_NAME }}"
   UV_PATH: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/uv"
   EXTRACTION_CACHE_PATH: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/extraction_cache"
@@ -29,8 +27,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     steps:
-      - uses: actions/checkout@v6
-
       - name: Validate required variables
         run: |
           [ -n "${{ vars.DANDI_S3_LOG_BASE_PATH }}" ] || { echo "Repository variable DANDI_S3_LOG_BASE_PATH must be set."; exit 1; }
@@ -39,9 +35,8 @@ jobs:
           [ -n "$MAXMIND_LICENSE_KEY" ] || { echo "Repository secret MAXMIND_LICENSE_KEY must be set."; exit 1; }
 
       - name: Cancel if offline
-        uses: ./.github/actions/check-runner
+        uses: CodyCBakerPhD/check-runner-action@v1
         with:
-          org: brain-bbqs-runners/dandi-usage-runner
           labels: typhon,dandi
           token: ${{ secrets._GITHUB_API_KEY }}
 
@@ -52,9 +47,6 @@ jobs:
     timeout-minutes: 2880  # 48 hours
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
       - name: Generate Dandiset summaries
         uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v1
         with:
