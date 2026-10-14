@@ -1,6 +1,7 @@
 <p align="center">
   <img src="docs/branding/dandi-runner.svg" width="250" alt="DANDI usage runner logo"/>
-  <h3 align="center">Runner for the DANDI Usage stats.</h3>
+  
+  <h1 align="center">DANDI Usage (Runner)</h1>
 </p>
 
 GitHub Action-controlled CRON jobs that generate the DANDI access summaries on the self-hosted Typhon runner
