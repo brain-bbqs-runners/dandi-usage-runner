@@ -1,0 +1,40 @@
+name: Upload summaries
+description: |
+  Upload the final access log summaries to an already-cloned GitHub repo.
+  Requires multiple environment variables to be set, including `CONDA_BASE_PATH` and `CONDA_ENV_NAME`.
+  Some commands may also require `S3_LOG_EXTRACTION_PASSWORD` for cache encryption.
+
+
+inputs:
+  extraction_cache_path:
+    description: Path to the extraction cache.
+    required: true
+  repository_path:
+    description: Path to the target GitHub repo.
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      name: Activate conda environment (containing local git config) and run commands
+      working-directory: ${{ inputs.extraction_cache_path }}/summaries/
+      run: |
+        mkdir ${{ inputs.repository_path }}/content || true
+        mkdir ${{ inputs.repository_path }}/content/summaries || true
+        find . -type f -name '*.tsv' -exec cp --parents {} ${{ inputs.repository_path }}/content/summaries/  \;
+
+        cp ./archive_totals.json ${{ inputs.repository_path }}/content
+        cp ./totals.json ${{ inputs.repository_path }}/content
+        cp \
+          ${{ inputs.extraction_cache_path }}/ips/region_codes_to_coordinates.yaml \
+          ${{ inputs.repository_path }}/content/region_codes_to_coordinates.yaml
+
+        cd ${{ inputs.repository_path }}
+
+        git pull
+        git branch
+        git status
+        git add content
+        git commit -m "update S3 access summary content" || true
+        git push

@@ -1,0 +1,38 @@
+name: Run `s3logextraction` command
+description: |
+  Run the `s3logextraction` command within a specified environment.
+  Requires multiple environment variables to be set, including `ENV_PATH` and `UV_PATH`.
+  Some commands may also require `S3_LOG_EXTRACTION_PASSWORD` for cache encryption, and the
+  `MAXMIND_ACCOUNT_ID`/`MAXMIND_LICENSE_KEY` of a free MaxMind account for the GeoLite2 database
+  used to geolocate requesters during `update summaries` and by `update ip database`.
+  Can override the `entrypoint` to use plugins such as `dandis3logextraction`.
+  Note that the `dandis3logextraction` entrypoint does not define the `update ip` group, so those
+  commands must always run through the default `s3logextraction` entrypoint.
+
+
+inputs:
+  command:
+    description: |
+      `s3logextraction` command to run after activating the environment.
+      Use spaces to separate command groups.
+    required: true
+  flags:
+    description: Space-separated, double-dash flags to pass to the script. For example, `--mode archive`.
+    required: false
+    default: ""
+  entrypoint:
+    description: The CLI entrypoint to use. Defaults to `s3logextraction`.
+    required: false
+    default: "s3logextraction"
+  flock_file:
+    description: Path to a file to use for flocking.
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      name: Activate environment and run command
+      run: |
+        source ${{ env.ENV_PATH }}/bin/activate
+        flock -n "${{ inputs.flock_file }}" ${{ env.UV_PATH }} run duct ${{ inputs.entrypoint }} ${{ inputs.command }} ${{ inputs.flags }}

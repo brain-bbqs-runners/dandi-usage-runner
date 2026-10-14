@@ -1,0 +1,31 @@
+name: Check self-hosted runner
+description: Used to immediately cancel workflow if self-hosted runner isn't online.
+
+inputs:
+  org:
+    description: "GitHub organization or repository (org or owner/repo)."
+    required: true
+  labels:
+    description: "Runner labels (comma-separated, no spaces)."
+    required: true
+  token:
+    description: "GitHub token to use for authentication."
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      run: chmod +x "$GITHUB_ACTION_PATH/script.sh"
+    - shell: bash
+      run: |
+        set -e
+        export GH_TOKEN="${{ inputs.token }}"
+        output=$("$GITHUB_ACTION_PATH/script.sh" "${{ inputs.org }}" "${{ inputs.labels }}")
+        echo "Runner check output: $output"
+        if [[ "$output" != "true" ]]; then
+          echo "Runner is offline. Triggering failure in workflow."
+          exit 1
+        else
+          echo "Runner is online. Proceeding."
+        fi
