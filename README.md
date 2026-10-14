@@ -1,5 +1,7 @@
-# dandi-usage-runner
-Runner for the DANDI Usage stats.
+<p align="center">
+  <img src="dandi-runner.svg" width="250" alt="DANDI usage runner logo"/>
+  <h3 align="center">Runner for the DANDI Usage stats.</h3>
+</p>
 
 GitHub Action-controlled CRON jobs that generate the DANDI access summaries on the self-hosted Typhon runner
 (moved from [CodyCBakerPhD/self-hosted-crons](https://github.com/CodyCBakerPhD/self-hosted-crons)).
