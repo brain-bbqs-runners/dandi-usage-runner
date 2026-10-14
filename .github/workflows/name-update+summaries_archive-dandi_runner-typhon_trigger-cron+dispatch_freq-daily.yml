@@ -56,47 +56,57 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Generate Dandiset summaries
-        uses: ./.github/actions/run-s3logextraction-command
+        uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v1
         with:
           command: update summaries
           flags: --skip 000108 --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache
-          flock_file: ${{ env.FLOCK_FILE }}
+          flock-file: ${{ env.FLOCK_FILE }}
+          env-path: ${{ env.ENV_PATH }}
+          uv-path: ${{ env.UV_PATH }}
           entrypoint: 'dandis3logextraction'
 
       - name: Generate archive summaries
-        uses: ./.github/actions/run-s3logextraction-command
+        uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v1
         with:
           command: update summaries
           flags: --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache --mode archive --asset-types-in-order Neurophysiology,Microscopy,Video,Miscellaneous
-          flock_file: ${{ env.FLOCK_FILE }}
+          flock-file: ${{ env.FLOCK_FILE }}
+          env-path: ${{ env.ENV_PATH }}
+          uv-path: ${{ env.UV_PATH }}
 
       # Reads the region labels out of the published `by_region.tsv` files, so it has to follow the summaries.
       # Runs through the default `s3logextraction` entrypoint, which `dandis3logextraction` does not re-expose.
       - name: Update region coordinates
-        uses: ./.github/actions/run-s3logextraction-command
+        uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v1
         with:
           command: update ip coordinates --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache --encryption false
-          flock_file: ${{ env.FLOCK_FILE }}
+          flock-file: ${{ env.FLOCK_FILE }}
+          env-path: ${{ env.ENV_PATH }}
+          uv-path: ${{ env.UV_PATH }}
 
       - name: Generate Dandiset totals
-        uses: ./.github/actions/run-s3logextraction-command
+        uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v1
         with:
           command: update totals
           flags: --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache
-          flock_file: ${{ env.FLOCK_FILE }}
+          flock-file: ${{ env.FLOCK_FILE }}
+          env-path: ${{ env.ENV_PATH }}
+          uv-path: ${{ env.UV_PATH }}
 
       - name: Generate archive totals
-        uses: ./.github/actions/run-s3logextraction-command
+        uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v1
         with:
           command: update totals
           flags: --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache --mode archive
-          flock_file: ${{ env.FLOCK_FILE }}
+          flock-file: ${{ env.FLOCK_FILE }}
+          env-path: ${{ env.ENV_PATH }}
+          uv-path: ${{ env.UV_PATH }}
 
       - name: Upload summaries
-        uses: ./.github/actions/upload-summaries
+        uses: CodyCBakerPhD/dandi-s3-logs-action/upload-summaries@v1
         with:
-          extraction_cache_path: ${{ env.EXTRACTION_CACHE_PATH }}
-          repository_path: ${{ env.ACCESS_SUMMARIES_REPOSITORY_PATH }}
+          extraction-cache-path: ${{ env.EXTRACTION_CACHE_PATH }}
+          repository-path: ${{ env.ACCESS_SUMMARIES_REPOSITORY_PATH }}
 
   NotifyOnFailure:
     if: ${{ always() && failure() }}  # 'always' for if any 'needs' are cancelled/skipped

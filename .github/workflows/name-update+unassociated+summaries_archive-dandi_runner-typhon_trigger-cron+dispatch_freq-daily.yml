@@ -50,11 +50,13 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Generate unassociated summaries
-        uses: ./.github/actions/run-s3logextraction-command
+        uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v1
         with:
           command: update summaries
           flags: --unassociated --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache
-          flock_file: ${{ env.FLOCK_FILE }}
+          flock-file: ${{ env.FLOCK_FILE }}
+          env-path: ${{ env.ENV_PATH }}
+          uv-path: ${{ env.UV_PATH }}
           entrypoint: 'dandis3logextraction'
 
   NotifyOnFailure:

@@ -47,11 +47,13 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Update microscopy summaries
-        uses: ./.github/actions/run-s3logextraction-command
+        uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v1
         with:
           command: update summaries
           flags: --pick 000108 --workers 1 --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache
-          flock_file: ${{ env.FLOCK_FILE }}
+          flock-file: ${{ env.FLOCK_FILE }}
+          env-path: ${{ env.ENV_PATH }}
+          uv-path: ${{ env.UV_PATH }}
           entrypoint: 'dandis3logextraction'
 
 # Wait for the other summary updater to aggregate further
