@@ -23,10 +23,9 @@ and the pre-run check through [CodyCBakerPhD/check-runner-action](https://github
 
 A self-hosted runner with the labels `typhon` and `dandi` must be registered to this repository.
 
-Repository variables:
-
-- `DANDI_S3_LOG_BASE_PATH` (holds `uv`, the environment, `extraction_cache`, `inventory`, `flocks`, `snapshots` and the `access-summaries` clone)
-- `S3LOGS_ENV_NAME` (the environment under that path, which the install workflow creates and fills)
+The workflows work under `/mnt/s3-logs/dandi-s3-logs` on the runner's host, which holds `uv`, the environment (`env`,
+created and filled by the install workflow), `extraction_cache`, `inventory`, `flocks`, `snapshots` and the
+`access-summaries` clone. The path is written into the workflows, so no repository variables are needed.
 
 Repository secrets:
 
@@ -37,4 +36,4 @@ Repository secrets:
 - `MAIL_USERNAME` / `MAIL_PASSWORD` (failure notifications)
 
 The inventory sync and the restic snapshot use what the runner's host already has: its own AWS credentials for
-`s3://dandiarchive-inventory`, and `snapshots/restic` with its password file under `DANDI_S3_LOG_BASE_PATH`.
+`s3://dandiarchive-inventory`, and `snapshots/restic` with its password file under `/mnt/s3-logs/dandi-s3-logs`.

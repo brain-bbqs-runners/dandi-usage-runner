@@ -10,12 +10,12 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  S3_LOG_BASE_PATH: ${{ vars.DANDI_S3_LOG_BASE_PATH }}
-  ENV_PATH: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/${{ vars.S3LOGS_ENV_NAME }}"
-  UV_PATH: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/uv"
-  EXTRACTION_CACHE_PATH: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/extraction_cache"
-  ACCESS_SUMMARIES_REPOSITORY_PATH: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/access-summaries"
-  FLOCK_FILE: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/flocks/s3logextraction.lock"
+  S3_LOG_BASE_PATH: "/mnt/s3-logs/dandi-s3-logs"
+  ENV_PATH: "/mnt/s3-logs/dandi-s3-logs/env"
+  UV_PATH: "/mnt/s3-logs/dandi-s3-logs/uv"
+  EXTRACTION_CACHE_PATH: "/mnt/s3-logs/dandi-s3-logs/extraction_cache"
+  ACCESS_SUMMARIES_REPOSITORY_PATH: "/mnt/s3-logs/dandi-s3-logs/access-summaries"
+  FLOCK_FILE: "/mnt/s3-logs/dandi-s3-logs/flocks/s3logextraction.lock"
   S3_LOG_EXTRACTION_PASSWORD: ${{ secrets.S3_LOG_EXTRACTION_PASSWORD }}
   # Requesters are geolocated while the summaries are generated, against the GeoLite2 database
   MAXMIND_ACCOUNT_ID: ${{ secrets.MAXMIND_ACCOUNT_ID }}
@@ -27,10 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     steps:
-      - name: Validate required variables
+      - name: Validate required secrets
         run: |
-          [ -n "${{ vars.DANDI_S3_LOG_BASE_PATH }}" ] || { echo "Repository variable DANDI_S3_LOG_BASE_PATH must be set."; exit 1; }
-          [ -n "${{ vars.S3LOGS_ENV_NAME }}" ] || { echo "Repository variable S3LOGS_ENV_NAME must be set."; exit 1; }
           [ -n "$MAXMIND_ACCOUNT_ID" ] || { echo "Repository secret MAXMIND_ACCOUNT_ID must be set."; exit 1; }
           [ -n "$MAXMIND_LICENSE_KEY" ] || { echo "Repository secret MAXMIND_LICENSE_KEY must be set."; exit 1; }
 

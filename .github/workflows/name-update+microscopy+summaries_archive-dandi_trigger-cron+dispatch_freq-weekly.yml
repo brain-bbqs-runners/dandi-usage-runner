@@ -6,10 +6,10 @@ on:
   workflow_dispatch:
 
 env:
-  S3_LOG_BASE_PATH: ${{ vars.DANDI_S3_LOG_BASE_PATH }}
-  ENV_PATH: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/${{ vars.S3LOGS_ENV_NAME }}"
-  UV_PATH: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/uv"
-  FLOCK_FILE: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/flocks/s3logextraction.lock"
+  S3_LOG_BASE_PATH: "/mnt/s3-logs/dandi-s3-logs"
+  ENV_PATH: "/mnt/s3-logs/dandi-s3-logs/env"
+  UV_PATH: "/mnt/s3-logs/dandi-s3-logs/uv"
+  FLOCK_FILE: "/mnt/s3-logs/dandi-s3-logs/flocks/s3logextraction.lock"
   S3_LOG_EXTRACTION_PASSWORD: ${{ secrets.S3_LOG_EXTRACTION_PASSWORD }}
   # Requesters are geolocated while the summaries are generated, against the GeoLite2 database
   MAXMIND_ACCOUNT_ID: ${{ secrets.MAXMIND_ACCOUNT_ID }}
@@ -22,11 +22,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     steps:
-      - name: Validate required variables
-        run: |
-          [ -n "${{ vars.DANDI_S3_LOG_BASE_PATH }}" ] || { echo "Repository variable DANDI_S3_LOG_BASE_PATH must be set."; exit 1; }
-          [ -n "${{ vars.S3LOGS_ENV_NAME }}" ] || { echo "Repository variable S3LOGS_ENV_NAME must be set."; exit 1; }
-
       - name: Cancel if offline
         uses: CodyCBakerPhD/check-runner-action@v1
         with:
