@@ -7,7 +7,7 @@
 GitHub Action-controlled CRON jobs that extract the DANDI S3 access logs and generate the access summaries on the self-hosted Typhon runner
 (moved from [CodyCBakerPhD/self-hosted-crons](https://github.com/CodyCBakerPhD/self-hosted-crons)).
 The install, the extraction commands and the upload run through
-[CodyCBakerPhD/dandi-s3-logs-action](https://github.com/CodyCBakerPhD/dandi-s3-logs-action) `@v2`,
+[CodyCBakerPhD/dandi-s3-logs-action](https://github.com/CodyCBakerPhD/dandi-s3-logs-action) `@v3`,
 and the pre-run check through [CodyCBakerPhD/check-runner-action](https://github.com/CodyCBakerPhD/check-runner-action) `@v1`.
 
 | Workflow | Schedule |
@@ -23,9 +23,13 @@ and the pre-run check through [CodyCBakerPhD/check-runner-action](https://github
 
 A self-hosted runner with the labels `typhon` and `dandi` must be registered to this repository.
 
-The workflows work under `/mnt/s3-logs/dandi-s3-logs` on the runner's host, which holds `uv`, the environment (`env`,
-created and filled by the install workflow), `extraction_cache`, `inventory`, `flocks`, `snapshots` and the
-`access-summaries` clone. The path is written into the workflows, so no repository variables are needed.
+The workflows work under `/mnt/s3-logs/dandi-s3-logs` on the runner's host, which holds `uv`, the environment (`env`),
+`extraction_cache`, `inventory`, `flocks`, `snapshots` and the `access-summaries` clone. The path is written into the
+workflows, so no repository variables are needed.
+
+On a fresh runner, dispatching the install workflow downloads `uv` and creates the environment, and the first summaries
+run clones [dandi/access-summaries](https://github.com/dandi/access-summaries) over SSH. The clone and its pushes use the
+runner user's own git credentials, so that user needs an SSH key with push access to it.
 
 Repository secrets:
 

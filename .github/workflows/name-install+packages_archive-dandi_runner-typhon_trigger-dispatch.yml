@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Install packages
-        uses: CodyCBakerPhD/dandi-s3-logs-action/install-packages@v2
+        uses: CodyCBakerPhD/dandi-s3-logs-action/install-packages@v3
         with:
           env-path: ${{ env.S3_LOG_BASE_PATH }}/env
           uv-path: ${{ env.S3_LOG_BASE_PATH }}/uv

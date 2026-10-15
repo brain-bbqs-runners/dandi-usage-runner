@@ -39,7 +39,7 @@ jobs:
 
     steps:
       - name: Run primary S3 log extraction
-        uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v2
+        uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v3
         env:
           DUCT_OUTPUT_PREFIX: "${{ env.S3_LOG_BASE_PATH }}/extraction_cache/.duct/{datetime}"
         with:
