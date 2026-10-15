@@ -31,7 +31,8 @@ Repository secrets:
 
 - `S3_LOG_EXTRACTION_PASSWORD`
 - `MAXMIND_ACCOUNT_ID` / `MAXMIND_LICENSE_KEY`
-- `IPS_TO_SKIP` (optional, for the extraction)
+- `IPS_TO_SKIP` (required by the extraction): a regex of requester IPs to leave out. The extractor treats an empty value
+  as matching every IP and would record nothing, so with none to leave out, set it to `^$`.
 - `_GITHUB_API_KEY` (token able to list this repository's runners, for the pre-run check)
 - `MAIL_USERNAME` / `MAIL_PASSWORD` (failure notifications)
 
