@@ -11,11 +11,6 @@ concurrency:
 
 env:
   S3_LOG_BASE_PATH: "/mnt/s3-logs/dandi-s3-logs"
-  ENV_PATH: "/mnt/s3-logs/dandi-s3-logs/env"
-  UV_PATH: "/mnt/s3-logs/dandi-s3-logs/uv"
-  EXTRACTION_CACHE_PATH: "/mnt/s3-logs/dandi-s3-logs/extraction_cache"
-  ACCESS_SUMMARIES_REPOSITORY_PATH: "/mnt/s3-logs/dandi-s3-logs/access-summaries"
-  FLOCK_FILE: "/mnt/s3-logs/dandi-s3-logs/flocks/s3logextraction.lock"
   S3_LOG_EXTRACTION_PASSWORD: ${{ secrets.S3_LOG_EXTRACTION_PASSWORD }}
   # Requesters are geolocated while the summaries are generated, against the GeoLite2 database
   MAXMIND_ACCOUNT_ID: ${{ secrets.MAXMIND_ACCOUNT_ID }}
@@ -50,9 +45,9 @@ jobs:
         with:
           command: update summaries
           flags: --skip 000108 --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache
-          flock-file: ${{ env.FLOCK_FILE }}
-          env-path: ${{ env.ENV_PATH }}
-          uv-path: ${{ env.UV_PATH }}
+          flock-file: ${{ env.S3_LOG_BASE_PATH }}/flocks/s3logextraction.lock
+          env-path: ${{ env.S3_LOG_BASE_PATH }}/env
+          uv-path: ${{ env.S3_LOG_BASE_PATH }}/uv
           entrypoint: 'dandis3logextraction'
 
       - name: Generate archive summaries
@@ -60,9 +55,9 @@ jobs:
         with:
           command: update summaries
           flags: --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache --mode archive --asset-types-in-order Neurophysiology,Microscopy,Video,Miscellaneous
-          flock-file: ${{ env.FLOCK_FILE }}
-          env-path: ${{ env.ENV_PATH }}
-          uv-path: ${{ env.UV_PATH }}
+          flock-file: ${{ env.S3_LOG_BASE_PATH }}/flocks/s3logextraction.lock
+          env-path: ${{ env.S3_LOG_BASE_PATH }}/env
+          uv-path: ${{ env.S3_LOG_BASE_PATH }}/uv
 
       # Reads the region labels out of the published `by_region.tsv` files, so it has to follow the summaries.
       # Runs through the default `s3logextraction` entrypoint, which `dandis3logextraction` does not re-expose.
@@ -70,33 +65,33 @@ jobs:
         uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v2
         with:
           command: update ip coordinates --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache --encryption false
-          flock-file: ${{ env.FLOCK_FILE }}
-          env-path: ${{ env.ENV_PATH }}
-          uv-path: ${{ env.UV_PATH }}
+          flock-file: ${{ env.S3_LOG_BASE_PATH }}/flocks/s3logextraction.lock
+          env-path: ${{ env.S3_LOG_BASE_PATH }}/env
+          uv-path: ${{ env.S3_LOG_BASE_PATH }}/uv
 
       - name: Generate Dandiset totals
         uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v2
         with:
           command: update totals
           flags: --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache
-          flock-file: ${{ env.FLOCK_FILE }}
-          env-path: ${{ env.ENV_PATH }}
-          uv-path: ${{ env.UV_PATH }}
+          flock-file: ${{ env.S3_LOG_BASE_PATH }}/flocks/s3logextraction.lock
+          env-path: ${{ env.S3_LOG_BASE_PATH }}/env
+          uv-path: ${{ env.S3_LOG_BASE_PATH }}/uv
 
       - name: Generate archive totals
         uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v2
         with:
           command: update totals
           flags: --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache --mode archive
-          flock-file: ${{ env.FLOCK_FILE }}
-          env-path: ${{ env.ENV_PATH }}
-          uv-path: ${{ env.UV_PATH }}
+          flock-file: ${{ env.S3_LOG_BASE_PATH }}/flocks/s3logextraction.lock
+          env-path: ${{ env.S3_LOG_BASE_PATH }}/env
+          uv-path: ${{ env.S3_LOG_BASE_PATH }}/uv
 
       - name: Upload summaries
         uses: CodyCBakerPhD/dandi-s3-logs-action/upload-summaries@v2
         with:
-          extraction-cache-path: ${{ env.EXTRACTION_CACHE_PATH }}
-          repository-path: ${{ env.ACCESS_SUMMARIES_REPOSITORY_PATH }}
+          extraction-cache-path: ${{ env.S3_LOG_BASE_PATH }}/extraction_cache
+          repository-path: ${{ env.S3_LOG_BASE_PATH }}/access-summaries
 
   NotifyOnFailure:
     if: ${{ always() && failure() }}  # 'always' for if any 'needs' are cancelled/skipped

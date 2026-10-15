@@ -7,9 +7,6 @@ on:
 
 env:
   S3_LOG_BASE_PATH: "/mnt/s3-logs/dandi-s3-logs"
-  ENV_PATH: "/mnt/s3-logs/dandi-s3-logs/env"
-  UV_PATH: "/mnt/s3-logs/dandi-s3-logs/uv"
-  FLOCK_FILE: "/mnt/s3-logs/dandi-s3-logs/flocks/s3logextraction.lock"
   S3_LOG_EXTRACTION_PASSWORD: ${{ secrets.S3_LOG_EXTRACTION_PASSWORD }}
   # Requesters are geolocated while the summaries are generated, against the GeoLite2 database
   MAXMIND_ACCOUNT_ID: ${{ secrets.MAXMIND_ACCOUNT_ID }}
@@ -40,9 +37,9 @@ jobs:
         with:
           command: update summaries
           flags: --pick 000108 --workers 1 --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache
-          flock-file: ${{ env.FLOCK_FILE }}
-          env-path: ${{ env.ENV_PATH }}
-          uv-path: ${{ env.UV_PATH }}
+          flock-file: ${{ env.S3_LOG_BASE_PATH }}/flocks/s3logextraction.lock
+          env-path: ${{ env.S3_LOG_BASE_PATH }}/env
+          uv-path: ${{ env.S3_LOG_BASE_PATH }}/uv
           entrypoint: 'dandis3logextraction'
 
 # Wait for the other summary updater to aggregate further

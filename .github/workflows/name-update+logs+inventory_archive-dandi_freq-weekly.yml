@@ -6,7 +6,6 @@ on:
 
 env:
   S3_LOG_BASE_PATH: "/mnt/s3-logs/dandi-s3-logs"
-  ENV_PATH: "/mnt/s3-logs/dandi-s3-logs/env"
 
 jobs:
 
@@ -30,7 +29,7 @@ jobs:
       - name: Update log inventory
         working-directory: ${{ env.S3_LOG_BASE_PATH }}
         run: |
-          source ${{ env.ENV_PATH }}/bin/activate
+          source ${{ env.S3_LOG_BASE_PATH }}/env/bin/activate
           s5cmd sync --size-only 's3://dandiarchive-inventory/dandiarchive-logs/LogsWeeklyInventory/*' inventory/
 
   NotifyOnFailure:
