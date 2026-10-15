@@ -1,6 +1,6 @@
 <p align="center">
   <img src="docs/branding/dandi-runner.svg" width="250" alt="DANDI usage runner logo"/>
-  
+
   <h1 align="center">DANDI Usage (Runner)</h1>
 </p>
 
