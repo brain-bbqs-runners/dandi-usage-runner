@@ -41,7 +41,7 @@ jobs:
 
     steps:
       - name: Update microscopy summaries
-        uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v1
+        uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v2
         with:
           command: update summaries
           flags: --pick 000108 --workers 1 --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache

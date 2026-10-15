@@ -1,11 +1,17 @@
-# Manual install/upgrade of the extraction packages in the DANDI runner environment.
+# Manual setup and upgrade of the DANDI runner environment.
 #
 # The recurring pipelines deliberately do not install anything, so that a scheduled run never picks up
-# a new version mid-flight. Dispatch this workflow when the pinned revisions below need to be rolled out.
+# a new version mid-flight. Dispatch this workflow to create the environment the first time, to roll out
+# new package versions, or with `recreate` to rebuild the environment from scratch.
 name: Install DANDI extraction packages
 
 on:
   workflow_dispatch:
+    inputs:
+      recreate:
+        description: Delete the environment and create it again, even if it already runs Python 3.14
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -39,13 +45,13 @@ jobs:
     runs-on: [self-hosted, typhon, dandi]
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
       - name: Install packages
-        uses: ./.github/actions/install-s3logextraction
+        uses: CodyCBakerPhD/dandi-s3-logs-action/install-packages@v2
         with:
-          flock_file: ${{ env.FLOCK_FILE }}
+          env-path: ${{ env.ENV_PATH }}
+          uv-path: ${{ env.UV_PATH }}
+          flock-file: ${{ env.FLOCK_FILE }}
+          recreate: ${{ inputs.recreate }}
 
   NotifyOnFailure:
     if: ${{ always() && failure() }}  # 'always' for if any 'needs' are cancelled/skipped

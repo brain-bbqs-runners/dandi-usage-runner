@@ -42,7 +42,7 @@ jobs:
 
     steps:
       - name: Run primary S3 log extraction
-        uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v1
+        uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v2
         with:
           command: extract s3://dandiarchive-logs
           flags: --mode remote --inventory ${{ env.S3_LOG_BASE_PATH }}/inventory --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache --limit 1000000
