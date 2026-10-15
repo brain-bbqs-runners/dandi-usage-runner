@@ -5,8 +5,7 @@ on:
   workflow_dispatch:
 
 env:
-  S3_LOG_BASE_PATH: ${{ vars.DANDI_S3_LOG_BASE_PATH }}
-  ENV_PATH: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/${{ vars.S3LOGS_ENV_NAME }}"
+  S3_LOG_BASE_PATH: "/mnt/s3-logs/dandi-s3-logs"
 
 jobs:
 
@@ -15,11 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     steps:
-      - name: Validate required variables
-        run: |
-          [ -n "${{ vars.DANDI_S3_LOG_BASE_PATH }}" ] || { echo "Repository variable DANDI_S3_LOG_BASE_PATH must be set."; exit 1; }
-          [ -n "${{ vars.S3LOGS_ENV_NAME }}" ] || { echo "Repository variable S3LOGS_ENV_NAME must be set."; exit 1; }
-
       - name: Cancel if offline
         uses: CodyCBakerPhD/check-runner-action@v1
         with:
@@ -35,7 +29,7 @@ jobs:
       - name: Update log inventory
         working-directory: ${{ env.S3_LOG_BASE_PATH }}
         run: |
-          source ${{ env.ENV_PATH }}/bin/activate
+          source ${{ env.S3_LOG_BASE_PATH }}/env/bin/activate
           s5cmd sync --size-only 's3://dandiarchive-inventory/dandiarchive-logs/LogsWeeklyInventory/*' inventory/
 
   NotifyOnFailure:

@@ -18,21 +18,13 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  S3_LOG_BASE_PATH: ${{ vars.DANDI_S3_LOG_BASE_PATH }}
-  ENV_PATH: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/${{ vars.S3LOGS_ENV_NAME }}"
-  UV_PATH: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/uv"
-  FLOCK_FILE: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/flocks/s3logextraction.lock"
+  S3_LOG_BASE_PATH: "/mnt/s3-logs/dandi-s3-logs"
 
 jobs:
   CheckTyphon:
     name: Pre-run Check
     runs-on: ubuntu-latest
     steps:
-      - name: Validate required variables
-        run: |
-          [ -n "${{ vars.DANDI_S3_LOG_BASE_PATH }}" ] || { echo "Repository variable DANDI_S3_LOG_BASE_PATH must be set."; exit 1; }
-          [ -n "${{ vars.S3LOGS_ENV_NAME }}" ] || { echo "Repository variable S3LOGS_ENV_NAME must be set."; exit 1; }
-
       - name: Cancel if offline
         uses: CodyCBakerPhD/check-runner-action@v1
         with:
@@ -48,9 +40,9 @@ jobs:
       - name: Install packages
         uses: CodyCBakerPhD/dandi-s3-logs-action/install-packages@v2
         with:
-          env-path: ${{ env.ENV_PATH }}
-          uv-path: ${{ env.UV_PATH }}
-          flock-file: ${{ env.FLOCK_FILE }}
+          env-path: ${{ env.S3_LOG_BASE_PATH }}/env
+          uv-path: ${{ env.S3_LOG_BASE_PATH }}/uv
+          flock-file: ${{ env.S3_LOG_BASE_PATH }}/flocks/s3logextraction.lock
           recreate: ${{ inputs.recreate }}
 
   NotifyOnFailure:

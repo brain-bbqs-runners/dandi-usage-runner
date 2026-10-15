@@ -10,12 +10,8 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  S3_LOG_BASE_PATH: ${{ vars.DANDI_S3_LOG_BASE_PATH }}
-  ENV_PATH: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/${{ vars.S3LOGS_ENV_NAME }}"
-  UV_PATH: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/uv"
-  FLOCK_FILE: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/flocks/s3logextraction.lock"
+  S3_LOG_BASE_PATH: "/mnt/s3-logs/dandi-s3-logs"
   IPS_TO_SKIP: ${{ secrets.IPS_TO_SKIP }}
-  DUCT_OUTPUT_PREFIX: "${{ vars.DANDI_S3_LOG_BASE_PATH }}/extraction_cache/.duct/{datetime}"
 
 jobs:
   CheckTyphon:
@@ -23,11 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     steps:
-      - name: Validate required variables
-        run: |
-          [ -n "${{ vars.DANDI_S3_LOG_BASE_PATH }}" ] || { echo "Repository variable DANDI_S3_LOG_BASE_PATH must be set."; exit 1; }
-          [ -n "${{ vars.S3LOGS_ENV_NAME }}" ] || { echo "Repository variable S3LOGS_ENV_NAME must be set."; exit 1; }
-
       - name: Cancel if offline
         uses: CodyCBakerPhD/check-runner-action@v1
         with:
@@ -43,12 +34,14 @@ jobs:
     steps:
       - name: Run primary S3 log extraction
         uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v2
+        env:
+          DUCT_OUTPUT_PREFIX: "${{ env.S3_LOG_BASE_PATH }}/extraction_cache/.duct/{datetime}"
         with:
           command: extract s3://dandiarchive-logs
           flags: --mode remote --inventory ${{ env.S3_LOG_BASE_PATH }}/inventory --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache --limit 1000000
-          flock-file: ${{ env.FLOCK_FILE }}
-          env-path: ${{ env.ENV_PATH }}
-          uv-path: ${{ env.UV_PATH }}
+          flock-file: ${{ env.S3_LOG_BASE_PATH }}/flocks/s3logextraction.lock
+          env-path: ${{ env.S3_LOG_BASE_PATH }}/env
+          uv-path: ${{ env.S3_LOG_BASE_PATH }}/uv
           entrypoint: 'dandis3logextraction'
 
       - name: Take snapshot for backup
