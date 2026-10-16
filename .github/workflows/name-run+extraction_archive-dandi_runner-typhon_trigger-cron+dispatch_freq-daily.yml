@@ -38,10 +38,17 @@ jobs:
     timeout-minutes: 2880  # 48 hours
 
     steps:
+      # The extraction downloads each batch of raw logs into a temporary directory, and restic writes its pack
+      # files to one, so both are pointed at the base path rather than /tmp through TMPDIR. The directory has to
+      # exist, since Python falls back to /tmp without saying so when TMPDIR names a missing one.
+      - name: Create temporary directory
+        run: mkdir -p ${{ env.S3_LOG_BASE_PATH }}/tmp
+
       - name: Run primary S3 log extraction
         uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v3
         env:
           DUCT_OUTPUT_PREFIX: "${{ env.S3_LOG_BASE_PATH }}/extraction_cache/.duct/{datetime}"
+          TMPDIR: "${{ env.S3_LOG_BASE_PATH }}/tmp"
         with:
           command: extract s3://dandiarchive-logs
           flags: --mode remote --inventory ${{ env.S3_LOG_BASE_PATH }}/inventory --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache --limit 1000000
@@ -52,6 +59,8 @@ jobs:
 
       - name: Take snapshot for backup
         working-directory: ${{ env.S3_LOG_BASE_PATH }}/
+        env:
+          TMPDIR: "${{ env.S3_LOG_BASE_PATH }}/tmp"
         run: ./snapshots/restic backup ./extraction_cache --repo ./snapshots/backups/ --password-file ./snapshots/.restic-password --read-concurrency 16 --pack-size 128 --compression max --skip-if-unchanged
 
   NotifyOnFailure:

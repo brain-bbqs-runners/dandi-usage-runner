@@ -24,8 +24,9 @@ and the pre-run check through [CodyCBakerPhD/check-runner-action](https://github
 A self-hosted runner with the labels `typhon` and `dandi` must be registered to this repository.
 
 The workflows work under `/mnt/s3-logs/dandi-s3-logs` on the runner's host, which holds `uv`, the environment (`env`),
-`extraction_cache`, `inventory`, `flocks`, `snapshots` and the `access-summaries` clone. The path is written into the
-workflows, so no repository variables are needed.
+`extraction_cache`, `inventory`, `flocks`, `snapshots`, `tmp` and the `access-summaries` clone. The path is written into
+the workflows, so no repository variables are needed. The extraction and its restic snapshot use `tmp` as their
+temporary directory in place of `/tmp`.
 
 On a fresh runner, dispatching the install workflow downloads `uv` and creates the environment, and the first summaries
 run clones [dandi/access-summaries](https://github.com/dandi/access-summaries) over SSH. The clone and its pushes use the
