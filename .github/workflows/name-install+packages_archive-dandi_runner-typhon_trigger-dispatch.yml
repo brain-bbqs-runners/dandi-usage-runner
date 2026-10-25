@@ -35,6 +35,7 @@ jobs:
     needs: CheckTyphon
     name: Install packages
     runs-on: [self-hosted, typhon, dandi]
+    timeout-minutes: 7200  # 5 days, the documented maximum for self-hosted runners
 
     steps:
       - name: Install packages
