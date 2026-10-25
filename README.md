@@ -43,3 +43,26 @@ Repository secrets:
 
 The inventory sync and the restic snapshot use what the runner's host already has: its own AWS credentials for
 `s3://dandiarchive-inventory`, and `snapshots/restic` with its password file under `/mnt/s3-logs/dandi-s3-logs`.
+
+## Dispatching the extraction only when needed
+
+The inventory is only synced on Sundays, so most daily extraction runs find nothing to do.
+[`scripts/dispatch-extraction-if-pending.sh`](scripts/dispatch-extraction-if-pending.sh) is meant for the crontab of the
+runner's host. It runs `dandis3logextraction pending` from the environment and dispatches the extraction workflow
+through the GitHub API only when log files are pending. It does nothing while another run holds the extraction lock. A
+failed check, such as corrupted extraction records, also dispatches, so that the failure reaches the workflow's
+failure notification.
+
+The script reads a token from `/mnt/s3-logs/dandi-s3-logs/.github-dispatch-token` (or the path in
+`DISPATCH_TOKEN_FILE`). Use a fine-grained personal access token scoped to only this repository, with the
+**Actions: Read and write** repository permission. Keep the file readable by the runner user alone (`chmod 600`).
+
+With a checkout of this repository on the host, add a crontab line for the runner user such as the following. It runs
+daily at 01:00 host time and appends to a log file.
+
+```
+0 1 * * * /path/to/dandi-usage-runner/scripts/dispatch-extraction-if-pending.sh >> /mnt/s3-logs/dandi-s3-logs/dispatch-extraction.log 2>&1
+```
+
+The check needs `dandi-s3-log-extraction` 1.6.2 or later in the environment. Once that is released, dispatch the install
+workflow to pick it up.
