@@ -39,11 +39,20 @@ Repository secrets:
 - `_GITHUB_API_KEY` (token able to list this repository's runners, for the pre-run check)
 - `MAIL_USERNAME` / `MAIL_PASSWORD` (failure notifications)
 
-Requester IPs to leave out are listed on the runner's host in `~/.s3-log-extraction/excluded_ips.txt` of the runner
-user, one address per line, with `#` comments. The extraction drops their requests and every summaries workflow leaves
-them out, so the one file covers all of them. Only exact addresses are accepted. An absent or empty file leaves no one
-out. Addresses can also be given in `S3_LOG_EXTRACTION_EXCLUDED_IPS`, comma separated, in
-`~/.s3-log-extraction/.env`.
+Requester IPs to leave out are listed on the runner's host in the runner user's `~/.s3-log-extraction/.env`, a
+standard dotenv file holding one comma-separated, unquoted line.
+
+```text
+# Drogon
+S3_LOG_EXTRACTION_EXCLUDED_IPS=192.0.2.1,192.0.2.2
+```
+
+The extraction drops their requests and every summaries workflow leaves them out, so this one file covers all of them,
+and no repository secret is needed. Only exact addresses are accepted. An absent file or an empty value leaves no one
+out. The Python CLI reads the file with `python-dotenv`. Other tools on the host can read the same file directly, for
+example a shell with `set -a; . ~/.s3-log-extraction/.env; set +a`, or a workflow step with
+`cat ~/.s3-log-extraction/.env >> "$GITHUB_ENV"`. A variable already set in the environment takes precedence over the
+file.
 
 The inventory sync and the restic snapshot use what the runner's host already has: its own AWS credentials for
 `s3://dandiarchive-inventory`, and `snapshots/restic` with its password file under `/mnt/s3-logs/dandi-s3-logs`.
