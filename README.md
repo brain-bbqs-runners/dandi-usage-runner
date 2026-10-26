@@ -19,6 +19,7 @@ and the pre-run check through [CodyCBakerPhD/check-runner-action](https://github
 | Update microscopy summaries (DANDI:000108) | Mondays, 06:00 UTC |
 | Update unassociated DANDI summaries | 1st of each month, 03:00 UTC |
 | Scan DANDI extraction cache for excluded IPs (fails, and so emails, if the cache still holds their requests) | Manual dispatch only |
+| Remove excluded IPs from DANDI extraction cache (restic snapshot first, then a scan that must come back clean) | Manual dispatch only |
 
 ## Configuration
 
@@ -49,7 +50,8 @@ S3_LOG_EXTRACTION_EXCLUDED_IPS=192.0.2.1,192.0.2.2
 ```
 
 The extraction drops their requests, every summaries workflow leaves them out, and the scan workflow checks the cache
-for any of their requests extracted before they were listed. This one file covers all of them, and no repository secret
+for any of their requests extracted before they were listed. If it finds some, the remove workflow deletes them from
+the cache. This one file covers all of them, and no repository secret
 is needed. Only exact addresses are accepted. An absent file or an empty value leaves no one
 out. The Python CLI reads the file with `python-dotenv`. Other tools on the host can read the same file directly, for
 example a shell with `set -a; . ~/.s3-log-extraction/.env; set +a`, or a workflow step with

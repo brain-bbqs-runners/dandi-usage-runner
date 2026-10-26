@@ -1,0 +1,83 @@
+name: Remove excluded IPs from DANDI extraction cache
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  S3_LOG_BASE_PATH: "/mnt/s3-logs/dandi-s3-logs"
+
+jobs:
+  CheckTyphon:
+    name: Pre-run Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel if offline
+        uses: CodyCBakerPhD/check-runner-action@v1
+        with:
+          labels: typhon,dandi
+          token: ${{ secrets._GITHUB_API_KEY }}
+
+  RemoveExcludedIps:
+    needs: CheckTyphon
+    name: Remove excluded IPs
+    runs-on: [self-hosted, typhon, dandi]
+    timeout-minutes: 7200  # 120 hours
+
+    steps:
+      - name: Create temporary directory
+        run: mkdir -p ${{ env.S3_LOG_BASE_PATH }}/tmp
+
+      # The removal rewrites the cache in place, so a snapshot is taken first to restore from. It holds the
+      # extraction lock so that it never captures an extraction halfway through.
+      - name: Take snapshot for backup
+        working-directory: ${{ env.S3_LOG_BASE_PATH }}/
+        env:
+          TMPDIR: "${{ env.S3_LOG_BASE_PATH }}/tmp"
+        run: flock ./flocks/s3logextraction.lock ./snapshots/restic backup ./extraction_cache --repo ./snapshots/backups/ --password-file ./snapshots/.restic-password --read-concurrency 16 --pack-size 128 --compression max --skip-if-unchanged
+
+      # Removes the requests of every address in `~/.s3-log-extraction/.env` from the cache, which the next run of
+      # each summaries workflow picks up. It refuses to start after an interrupted extraction, and never prints the
+      # addresses. Runs through the default `s3logextraction` entrypoint, which `dandis3logextraction` does not
+      # re-expose.
+      - name: Remove excluded IPs from extraction cache
+        uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v3
+        with:
+          command: excluded remove
+          flags: --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache --encryption false --confirm
+          flock-file: ${{ env.S3_LOG_BASE_PATH }}/flocks/s3logextraction.lock
+          env-path: ${{ env.S3_LOG_BASE_PATH }}/env
+          uv-path: ${{ env.S3_LOG_BASE_PATH }}/uv
+
+      # Fails if any request of an excluded address is still in the cache
+      - name: Scan extraction cache
+        uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v3
+        with:
+          command: excluded scan
+          flags: --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache --encryption false
+          flock-file: ${{ env.S3_LOG_BASE_PATH }}/flocks/s3logextraction.lock
+          env-path: ${{ env.S3_LOG_BASE_PATH }}/env
+          uv-path: ${{ env.S3_LOG_BASE_PATH }}/uv
+
+  NotifyOnFailure:
+    if: ${{ always() && failure() }}  # 'always' for if any 'needs' are cancelled/skipped
+    needs: [CheckTyphon, RemoveExcludedIps]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send email notification on failure
+        uses: dawidd6/action-send-mail@v17
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "DANDI excluded IP removal failed (Typhon)"
+          to: cody.c.baker.phd@gmail.com  # Add more with comma separation (no spaces)
+          from: Typhon CRON <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            The removal of excluded IPs from the DANDI extraction cache could not complete, or left some behind.
+            A restic snapshot of the cache from before the removal is in snapshots/backups. Check status at
+            https://github.com/brain-bbqs-runners/dandi-usage-runner/actions/workflows/name-remove+excluded+ips_archive-dandi_runner-typhon_trigger-dispatch.yml
