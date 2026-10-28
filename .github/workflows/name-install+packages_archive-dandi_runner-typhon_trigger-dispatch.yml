@@ -46,6 +46,48 @@ jobs:
           flock-file: ${{ env.S3_LOG_BASE_PATH }}/flocks/s3logextraction.lock
           recreate: ${{ inputs.recreate }}
 
+      # The remove workflow snapshots the cache with restic before rewriting it. This installs a pinned,
+      # checksum-verified restic binary at `snapshots/restic` and initializes `snapshots/backups`, each only when it is
+      # missing, so an existing binary, password file or repository and its snapshots are never replaced or deleted.
+      # The repository uses a placeholder password unless the optional RESTIC_PASSWORD secret is set, since the
+      # snapshots never leave the host.
+      - name: Set up restic
+        working-directory: ${{ env.S3_LOG_BASE_PATH }}/
+        env:
+          RESTIC_VERSION: "0.18.0"
+          RESTIC_PASSWORD_SECRET: ${{ secrets.RESTIC_PASSWORD }}
+          TMPDIR: "${{ env.S3_LOG_BASE_PATH }}/tmp"
+        run: |
+          set -euo pipefail
+          mkdir -p snapshots tmp
+
+          if [ ! -x snapshots/restic ]; then
+            case "$(uname -m)" in
+              x86_64) arch=amd64 ;;
+              aarch64) arch=arm64 ;;
+              *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;;
+            esac
+            asset="restic_${RESTIC_VERSION}_linux_${arch}.bz2"
+            download_directory="$(mktemp -d)"
+            base_url="https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}"
+            curl -fsSL -o "${download_directory}/${asset}" "${base_url}/${asset}"
+            curl -fsSL -o "${download_directory}/SHA256SUMS" "${base_url}/SHA256SUMS"
+            (cd "${download_directory}" && sha256sum --check --ignore-missing --strict SHA256SUMS)
+            bunzip2 --stdout "${download_directory}/${asset}" > snapshots/restic.new
+            chmod 755 snapshots/restic.new
+            mv snapshots/restic.new snapshots/restic
+            rm -rf "${download_directory}"
+          fi
+          ./snapshots/restic version
+
+          if [ ! -s snapshots/.restic-password ]; then
+            (umask 077 && printf '%s' "${RESTIC_PASSWORD_SECRET:-123}" > snapshots/.restic-password)
+          fi
+
+          if [ ! -e snapshots/backups/config ]; then
+            ./snapshots/restic init --repo ./snapshots/backups/ --password-file ./snapshots/.restic-password
+          fi
+
   NotifyOnFailure:
     # A job that times out, or waits a day in the queue for the runner, ends as cancelled rather than failed
     if: ${{ always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}
