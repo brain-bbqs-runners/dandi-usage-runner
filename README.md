@@ -48,10 +48,10 @@ The inventory sync and the restic snapshot use what the runner's host already ha
 
 The inventory is only synced on Sundays, so most daily extraction runs find nothing to do.
 [`scripts/dispatch-extraction-if-pending.sh`](scripts/dispatch-extraction-if-pending.sh) is meant for the crontab of the
-runner's host. It runs `dandis3logextraction pending` from the environment and dispatches the extraction workflow
-through the GitHub API only when log files are pending. It does nothing while another run holds the extraction lock. A
-failed check, such as corrupted extraction records, also dispatches, so that the failure reaches the workflow's
-failure notification.
+runner's host. It runs the workflow's own extraction command with `--check` added, from the environment, and dispatches
+the extraction workflow through the GitHub API only when log files are pending. It does nothing while another run holds
+the extraction lock. A failed check, such as corrupted extraction records, also dispatches, so that the failure reaches
+the workflow's failure notification.
 
 The script reads a token from `/mnt/s3-logs/dandi-s3-logs/.github-dispatch-token` (or the path in
 `DISPATCH_TOKEN_FILE`). Use a fine-grained personal access token scoped to only this repository, with the

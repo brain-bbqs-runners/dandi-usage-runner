@@ -10,6 +10,8 @@ TOKEN_FILE="${DISPATCH_TOKEN_FILE:-$BASE_PATH/.github-dispatch-token}"
 REPOSITORY="brain-bbqs-runners/dandi-usage-runner"
 # The '+' of the workflow file name must be percent-encoded in the API path.
 WORKFLOW="name-run%2Bextraction_archive-dandi_runner-typhon_trigger-cron%2Bdispatch_freq-daily.yml"
+# `extract --check` exits with this when log files are pending, and 1 on an error.
+PENDING_STATUS=3
 # flock exits with this when another run holds the lock, which tells it apart from the check's own statuses.
 LOCK_HELD_STATUS=75
 
@@ -19,13 +21,16 @@ log() {
 
 [ -r "$TOKEN_FILE" ] || { log "Cannot read the dispatch token at $TOKEN_FILE."; exit 1; }
 
-# The check holds the same lock as the extraction, so it never reads the records while a run writes them.
+# The check is the workflow's own extraction command plus `--check`, so it reads exactly what a run would.
+# It holds the same lock as the extraction, so it never reads the records while a run writes them.
 status=0
 flock -n -E "$LOCK_HELD_STATUS" "$BASE_PATH/flocks/s3logextraction.lock" \
-    "$BASE_PATH/env/bin/dandis3logextraction" pending s3://dandiarchive-logs \
+    "$BASE_PATH/env/bin/dandis3logextraction" extract s3://dandiarchive-logs \
+    --mode remote \
     --inventory "$BASE_PATH/inventory" \
     --cache "$BASE_PATH/extraction_cache" \
-    --exit-code || status=$?
+    --limit 1000000 \
+    --check || status=$?
 
 case "$status" in
     0)
@@ -36,7 +41,7 @@ case "$status" in
         log "Another run holds the extraction lock. Not dispatching."
         exit 0
         ;;
-    1)
+    "$PENDING_STATUS")
         log "Log files are pending extraction. Dispatching the workflow."
         ;;
     *)
