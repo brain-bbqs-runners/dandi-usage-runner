@@ -36,10 +36,20 @@ Repository secrets:
 
 - `S3_LOG_EXTRACTION_PASSWORD`
 - `MAXMIND_ACCOUNT_ID` / `MAXMIND_LICENSE_KEY`
-- `IPS_TO_SKIP` (required by the extraction): a regex of requester IPs to leave out. The extractor treats an empty value
-  as matching every IP and would record nothing, so with none to leave out, set it to `^$`.
 - `_GITHUB_API_KEY` (token able to list this repository's runners, for the pre-run check)
 - `MAIL_USERNAME` / `MAIL_PASSWORD` (failure notifications)
+
+Requester IPs to leave out are listed on the runner's host in the runner user's
+`~/.s3-log-extraction/excluded_ips.txt`, one address per line, with `#` comments. This file is the only list of
+excluded addresses. The extraction drops their requests and every summaries workflow leaves them out, so no repository
+secret is needed.
+
+Only exact addresses are accepted. Networks in CIDR notation and patterns are refused with an error. An absent or
+empty file leaves no one out.
+
+Exclusion only works in one direction over time. Adding an address drops its requests from future extraction.
+Removing an address from the file does not bring its requests back, since they were never extracted. To include an
+address again, the extraction has to be rerun from scratch (`reset extraction`, then a full `extract`).
 
 The inventory sync and the restic snapshot use what the runner's host already has: its own AWS credentials for
 `s3://dandiarchive-inventory`, and `snapshots/restic` with its password file under `/mnt/s3-logs/dandi-s3-logs`.
