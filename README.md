@@ -19,7 +19,7 @@ and the pre-run check through [CodyCBakerPhD/check-runner-action](https://github
 | Update microscopy summaries (DANDI:000108) | Mondays, 06:00 UTC |
 | Update unassociated DANDI summaries | 1st of each month, 03:00 UTC |
 | Scan DANDI extraction cache for excluded IPs (`validate excluded`, which fails, and so emails, if the cache still holds their requests) | Manual dispatch only |
-| Remove excluded IPs from DANDI extraction cache (restic snapshot, then `reset excluded`, then `validate excluded`, which must come back clean) | Manual dispatch only |
+| Remove excluded IPs from DANDI extraction cache (restic snapshot, then `reset excluded`, then `validate excluded`, which must come back clean; the removal is permanent, so un-excluding an IP later needs a full re-extraction) | Manual dispatch only |
 
 ## Configuration
 
