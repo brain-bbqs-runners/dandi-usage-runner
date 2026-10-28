@@ -52,5 +52,9 @@ secret is needed.
 Only exact addresses are accepted. Networks in CIDR notation and patterns are refused with an error. An absent or
 empty file leaves no one out.
 
+Exclusion only works in one direction over time. Adding an address drops its requests from future extraction.
+Removing an address from the file does not bring its requests back, since they were never extracted. To include an
+address again, the extraction has to be rerun from scratch (`reset extraction`, then a full `extract`).
+
 The inventory sync and the restic snapshot use what the runner's host already has: its own AWS credentials for
 `s3://dandiarchive-inventory`, and `snapshots/restic` with its password file under `/mnt/s3-logs/dandi-s3-logs`.
