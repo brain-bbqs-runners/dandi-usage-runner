@@ -28,8 +28,8 @@ jobs:
     timeout-minutes: 7200  # 120 hours
 
     steps:
-      # Fails when the cache still holds requests from an address in `~/.s3-log-extraction/.env`, such as those
-      # extracted before it was listed, which sends the email below. The addresses themselves are never printed.
+      # Fails when the cache still holds requests from an address in `~/.s3-log-extraction/excluded_ips.txt`, such as
+      # those extracted before it was listed, which sends the email below. The addresses themselves are never printed.
       # Runs through the default `s3logextraction` entrypoint, which `dandis3logextraction` does not re-expose.
       - name: Scan extraction cache
         uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v3
