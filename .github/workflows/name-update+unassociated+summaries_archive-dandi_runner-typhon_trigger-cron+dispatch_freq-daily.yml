@@ -32,7 +32,7 @@ jobs:
     needs: CheckTyphon
     name: Update DANDI summaries
     runs-on: [self-hosted, typhon, dandi]
-    timeout-minutes: 4320  # 3 days
+    timeout-minutes: 7200  # 5 days, the documented maximum for self-hosted runners
 
     steps:
       - name: Generate unassociated summaries
@@ -46,7 +46,8 @@ jobs:
           entrypoint: 'dandis3logextraction'
 
   NotifyOnFailure:
-    if: ${{ always() && failure() }}  # 'always' for if any 'needs' are cancelled/skipped
+    # A job that times out, or waits a day in the queue for the runner, ends as cancelled rather than failed
+    if: ${{ always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}
     needs: [CheckTyphon, UpdateDandiSummaries]
     runs-on: ubuntu-latest
     steps:
