@@ -41,22 +41,22 @@ Repository secrets:
 - `_GITHUB_API_KEY` (token able to list this repository's runners, for the pre-run check)
 - `MAIL_USERNAME` / `MAIL_PASSWORD` (failure notifications)
 
-Requester IPs to leave out are listed on the runner's host in the runner user's `~/.s3-log-extraction/.env`, a
-standard dotenv file holding one comma-separated, unquoted line.
+Requester IPs to leave out are listed on the runner's host in the runner user's
+`~/.s3-log-extraction/excluded_ips.txt`, one address per line, with `#` comments. This file is the only list of
+excluded addresses. The extraction drops their requests and every summaries workflow leaves them out, so no repository
+secret is needed.
 
 ```text
-# Drogon
-S3_LOG_EXTRACTION_EXCLUDED_IPS=192.0.2.1,192.0.2.2
+192.0.2.1  # Drogon
+192.0.2.2  # Drogon
 ```
 
-The extraction drops their requests, every summaries workflow leaves them out, and the scan workflow checks the cache
-for any of their requests extracted before they were listed. If it finds some, the remove workflow deletes them from
-the cache. This one file covers all of them, and no repository secret
-is needed. Only exact addresses are accepted. An absent file or an empty value leaves no one
-out. The Python CLI reads the file with `python-dotenv`. Other tools on the host can read the same file directly, for
-example a shell with `set -a; . ~/.s3-log-extraction/.env; set +a`, or a workflow step with
-`cat ~/.s3-log-extraction/.env >> "$GITHUB_ENV"`. A variable already set in the environment takes precedence over the
-file.
+Only exact addresses are accepted. Networks in CIDR notation and patterns are refused with an error. An absent or
+empty file leaves no one out.
+
+The scan workflow checks the cache for requests of listed addresses extracted before they were listed, and the remove
+workflow deletes any it finds. The removal is permanent. Taking an address off the list afterwards does not bring its
+requests back, so un-excluding one needs a full re-extraction.
 
 The inventory sync and the restic snapshot use what the runner's host already has: its own AWS credentials for
 `s3://dandiarchive-inventory`, and `snapshots/restic` with its password file under `/mnt/s3-logs/dandi-s3-logs`.

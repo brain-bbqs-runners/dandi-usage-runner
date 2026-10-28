@@ -39,10 +39,10 @@ jobs:
           TMPDIR: "${{ env.S3_LOG_BASE_PATH }}/tmp"
         run: flock ./flocks/s3logextraction.lock ./snapshots/restic backup ./extraction_cache --repo ./snapshots/backups/ --password-file ./snapshots/.restic-password --read-concurrency 16 --pack-size 128 --compression max --skip-if-unchanged
 
-      # Removes the requests of every address in `~/.s3-log-extraction/.env` from the cache, which the next run of
-      # each summaries workflow picks up. It refuses to start after an interrupted extraction, and never prints the
-      # addresses. Runs through the default `s3logextraction` entrypoint, which `dandis3logextraction` does not
-      # re-expose.
+      # Removes the requests of every address in `~/.s3-log-extraction/excluded_ips.txt` from the cache, which the
+      # next run of each summaries workflow picks up. It refuses to start after an interrupted extraction, and never
+      # prints the addresses. Runs through the default `s3logextraction` entrypoint, which `dandis3logextraction` does
+      # not re-expose.
       - name: Remove excluded IPs from extraction cache
         uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v3
         with:
