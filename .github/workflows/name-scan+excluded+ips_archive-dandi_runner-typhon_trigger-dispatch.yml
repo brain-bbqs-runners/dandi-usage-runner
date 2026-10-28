@@ -34,7 +34,7 @@ jobs:
       - name: Scan extraction cache
         uses: CodyCBakerPhD/dandi-s3-logs-action/run-command@v3
         with:
-          command: excluded scan
+          command: validate excluded
           flags: --cache ${{ env.S3_LOG_BASE_PATH }}/extraction_cache --encryption false
           flock-file: ${{ env.S3_LOG_BASE_PATH }}/flocks/s3logextraction.lock
           env-path: ${{ env.S3_LOG_BASE_PATH }}/env
