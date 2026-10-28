@@ -31,10 +31,11 @@ the workflows, so no repository variables are needed. The extraction and its res
 temporary directory in place of `/tmp`.
 
 On a fresh runner, dispatching the install workflow downloads `uv` and creates the environment. It also sets up restic
-for the snapshots, each part only when it is missing: a pinned, checksum-verified binary at `snapshots/restic`, the
-password file `snapshots/.restic-password`, and the repository `snapshots/backups`. An existing binary, password file or
-repository, with its snapshots, is never replaced or deleted. A new password file takes the optional `RESTIC_PASSWORD`
-secret, or else the placeholder `123`, since the snapshots never leave the host. The first summaries
+for the snapshots. It installs a pinned, checksum-verified binary at `snapshots/restic` when it is missing, and writes
+the `RESTIC_PASSWORD` secret to `snapshots/.restic-password`, which every restic step reads. The secret is first
+checked against an existing repository `snapshots/backups`, which is only initialized when it is missing. An existing
+binary, repository or snapshot is never replaced or deleted, and if the secret does not open the repository, the
+install fails and leaves the password file as it was. The first summaries
 run clones [dandi/access-summaries](https://github.com/dandi/access-summaries) over SSH. The clone and its pushes use the
 runner user's own git credentials, so that user needs an SSH key with push access to it.
 Git runs SSH in batch mode there, so the key must not need a passphrase and `github.com` must already be in that user's
@@ -44,7 +45,8 @@ Git runs SSH in batch mode there, so the key must not need a passphrase and `git
 Repository secrets:
 
 - `S3_LOG_EXTRACTION_PASSWORD`
-- `RESTIC_PASSWORD` (optional): the password for a new restic repository, in place of the placeholder
+- `RESTIC_PASSWORD`: the password of the restic repository `snapshots/backups`, written to the host by the install
+  workflow
 - `MAXMIND_ACCOUNT_ID` / `MAXMIND_LICENSE_KEY`
 - `_GITHUB_API_KEY` (token able to list this repository's runners, for the pre-run check)
 - `MAIL_USERNAME` / `MAIL_PASSWORD` (failure notifications)

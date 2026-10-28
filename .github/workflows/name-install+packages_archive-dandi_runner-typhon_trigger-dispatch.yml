@@ -47,10 +47,10 @@ jobs:
           recreate: ${{ inputs.recreate }}
 
       # The remove workflow snapshots the cache with restic before rewriting it. This installs a pinned,
-      # checksum-verified restic binary at `snapshots/restic` and initializes `snapshots/backups`, each only when it is
-      # missing, so an existing binary, password file or repository and its snapshots are never replaced or deleted.
-      # The repository uses a placeholder password unless the optional RESTIC_PASSWORD secret is set, since the
-      # snapshots never leave the host.
+      # checksum-verified restic binary at `snapshots/restic` when it is missing, and writes the RESTIC_PASSWORD secret
+      # to `snapshots/.restic-password`, which every restic step reads. The secret is first checked against an existing
+      # repository, and `snapshots/backups` is only initialized when it is missing, so an existing binary, repository
+      # or snapshot is never replaced or deleted, and a password file is never overwritten by one that cannot open it.
       - name: Set up restic
         working-directory: ${{ env.S3_LOG_BASE_PATH }}/
         env:
@@ -80,13 +80,22 @@ jobs:
           fi
           ./snapshots/restic version
 
-          if [ ! -s snapshots/.restic-password ]; then
-            (umask 077 && printf '%s' "${RESTIC_PASSWORD_SECRET:-123}" > snapshots/.restic-password)
+          if [ -z "${RESTIC_PASSWORD_SECRET}" ]; then
+            echo "Set the RESTIC_PASSWORD secret to the password of the restic repository." >&2
+            exit 1
           fi
+          (umask 077 && printf '%s' "${RESTIC_PASSWORD_SECRET}" > snapshots/.restic-password.new)
 
-          if [ ! -e snapshots/backups/config ]; then
-            ./snapshots/restic init --repo ./snapshots/backups/ --password-file ./snapshots/.restic-password
+          if [ -e snapshots/backups/config ]; then
+            if ! ./snapshots/restic cat config --repo ./snapshots/backups/ --password-file ./snapshots/.restic-password.new > /dev/null; then
+              rm -f snapshots/.restic-password.new
+              echo "The RESTIC_PASSWORD secret does not open snapshots/backups, so snapshots/.restic-password is left as it was." >&2
+              exit 1
+            fi
+          else
+            ./snapshots/restic init --repo ./snapshots/backups/ --password-file ./snapshots/.restic-password.new
           fi
+          mv snapshots/.restic-password.new snapshots/.restic-password
 
   NotifyOnFailure:
     # A job that times out, or waits a day in the queue for the runner, ends as cancelled rather than failed
