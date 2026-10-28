@@ -40,19 +40,24 @@ Repository secrets:
 - `MAIL_USERNAME` / `MAIL_PASSWORD` (failure notifications)
 
 Requester IPs to leave out are listed on the runner's host in the runner user's `~/.s3-log-extraction/.env`, a
-standard dotenv file holding one comma-separated, unquoted line.
+standard dotenv file, as a double-quoted value with one address per line.
 
 ```text
-# Drogon
-S3_LOG_EXTRACTION_EXCLUDED_IPS=192.0.2.1,192.0.2.2
+S3_LOG_EXTRACTION_EXCLUDED_IPS="
+192.0.2.1  # Drogon
+192.0.2.2  # Drogon
+"
 ```
 
-The extraction drops their requests and every summaries workflow leaves them out, so this one file covers all of them,
-and no repository secret is needed. Only exact addresses are accepted. An absent file or an empty value leaves no one
-out. The Python CLI reads the file with `python-dotenv`. Other tools on the host can read the same file directly, for
-example a shell with `set -a; . ~/.s3-log-extraction/.env; set +a`, or a workflow step with
-`cat ~/.s3-log-extraction/.env >> "$GITHUB_ENV"`. A variable already set in the environment takes precedence over the
-file.
+Anything after a `#` on a line is a comment, and blank lines are ignored. The extraction drops their requests and
+every summaries workflow leaves them out, so this one file covers all of them, and no repository secret is needed.
+Only exact addresses are accepted. An absent file or an empty value leaves no one out. A variable already set in the
+environment takes precedence over the file.
+
+The Python CLI reads the file with `python-dotenv`. A shell on the host can read the same file with
+`set -a; . ~/.s3-log-extraction/.env; set +a`. A workflow step cannot simply append it to `$GITHUB_ENV`, since a
+multi-line value there needs the `NAME<<DELIMITER` heredoc form, and `docker --env-file` does not read multi-line
+values at all. Neither is needed here, since every workflow runs the Python CLI.
 
 The inventory sync and the restic snapshot use what the runner's host already has: its own AWS credentials for
 `s3://dandiarchive-inventory`, and `snapshots/restic` with its password file under `/mnt/s3-logs/dandi-s3-logs`.
