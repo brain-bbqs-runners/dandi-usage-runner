@@ -39,25 +39,18 @@ Repository secrets:
 - `_GITHUB_API_KEY` (token able to list this repository's runners, for the pre-run check)
 - `MAIL_USERNAME` / `MAIL_PASSWORD` (failure notifications)
 
-Requester IPs to leave out are listed on the runner's host in the runner user's `~/.s3-log-extraction/.env`, a
-standard dotenv file, as a double-quoted value with one address per line.
+Requester IPs to leave out are listed on the runner's host in the runner user's
+`~/.s3-log-extraction/excluded_ips.txt`, one address per line, with `#` comments. This file is the only list of
+excluded addresses. The extraction drops their requests and every summaries workflow leaves them out, so no repository
+secret is needed.
 
 ```text
-S3_LOG_EXTRACTION_EXCLUDED_IPS="
 192.0.2.1  # Drogon
 192.0.2.2  # Drogon
-"
 ```
 
-Anything after a `#` on a line is a comment, and blank lines are ignored. The extraction drops their requests and
-every summaries workflow leaves them out, so this one file covers all of them, and no repository secret is needed.
-Only exact addresses are accepted. An absent file or an empty value leaves no one out. A variable already set in the
-environment takes precedence over the file.
-
-The Python CLI reads the file with `python-dotenv`. A shell on the host can read the same file with
-`set -a; . ~/.s3-log-extraction/.env; set +a`. A workflow step cannot simply append it to `$GITHUB_ENV`, since a
-multi-line value there needs the `NAME<<DELIMITER` heredoc form, and `docker --env-file` does not read multi-line
-values at all. Neither is needed here, since every workflow runs the Python CLI.
+Only exact addresses are accepted. Networks in CIDR notation and patterns are refused with an error. An absent or
+empty file leaves no one out.
 
 The inventory sync and the restic snapshot use what the runner's host already has: its own AWS credentials for
 `s3://dandiarchive-inventory`, and `snapshots/restic` with its password file under `/mnt/s3-logs/dandi-s3-logs`.
