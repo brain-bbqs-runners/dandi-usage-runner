@@ -28,7 +28,7 @@ jobs:
     needs: CheckTyphon
     name: Process access logs
     runs-on: [self-hosted, typhon, dandi]
-    timeout-minutes: 2880  # 48 hours
+    timeout-minutes: 7200  # 5 days, the documented maximum for self-hosted runners
 
     steps:
       # The extraction downloads each batch of raw logs into a temporary directory, and restic writes its pack
