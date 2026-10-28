@@ -31,6 +31,9 @@ temporary directory in place of `/tmp`.
 On a fresh runner, dispatching the install workflow downloads `uv` and creates the environment, and the first summaries
 run clones [dandi/access-summaries](https://github.com/dandi/access-summaries) over SSH. The clone and its pushes use the
 runner user's own git credentials, so that user needs an SSH key with push access to it.
+Git runs SSH in batch mode there, so the key must not need a passphrase and `github.com` must already be in that user's
+`known_hosts`: a prompt fails the upload instead of waiting for an answer. To pick the key, name it in the user's
+`~/.ssh/config`, since the step's `GIT_SSH_COMMAND` takes precedence over git's `core.sshCommand`.
 
 Repository secrets:
 

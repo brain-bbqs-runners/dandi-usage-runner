@@ -34,7 +34,8 @@ jobs:
           s5cmd sync --size-only 's3://dandiarchive-inventory/dandiarchive-logs/LogsWeeklyInventory/*' inventory/
 
   NotifyOnFailure:
-    if: ${{ always() && failure() }}  # 'always' for if any 'needs' are cancelled/skipped
+    # A job that times out, or waits a day in the queue for the runner, ends as cancelled rather than failed
+    if: ${{ always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}
     needs: [CheckTyphon, UpdateLogInventory]
     runs-on: ubuntu-latest
     steps:
