@@ -37,7 +37,7 @@ jobs:
     needs: CheckTyphon
     name: Update DANDI summaries
     runs-on: [self-hosted, typhon, dandi]
-    timeout-minutes: 2880  # 48 hours
+    timeout-minutes: 7200  # 5 days, the documented maximum for self-hosted runners
 
     steps:
       - name: Generate Dandiset summaries
@@ -87,15 +87,21 @@ jobs:
           env-path: ${{ env.S3_LOG_BASE_PATH }}/env
           uv-path: ${{ env.S3_LOG_BASE_PATH }}/uv
 
+      # Git reaches GitHub over SSH, and an SSH prompt (an unknown host key, a key passphrase) never shows in the log
+      # and waits forever. BatchMode fails it at once instead, and the timeout bounds any other stall.
       - name: Upload summaries
         uses: CodyCBakerPhD/dandi-s3-logs-action/upload-summaries@v3
+        timeout-minutes: 60
+        env:
+          GIT_SSH_COMMAND: ssh -o BatchMode=yes -o ConnectTimeout=30
         with:
           extraction-cache-path: ${{ env.S3_LOG_BASE_PATH }}/extraction_cache
           repository-path: ${{ env.S3_LOG_BASE_PATH }}/access-summaries
           repository-url: git@github.com:dandi/access-summaries.git
 
   NotifyOnFailure:
-    if: ${{ always() && failure() }}  # 'always' for if any 'needs' are cancelled/skipped
+    # A job that times out, or waits a day in the queue for the runner, ends as cancelled rather than failed
+    if: ${{ always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}
     needs: [CheckTyphon, UpdateDandiSummaries]
     runs-on: ubuntu-latest
     steps:

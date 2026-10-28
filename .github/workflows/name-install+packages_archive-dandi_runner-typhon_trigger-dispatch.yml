@@ -35,6 +35,7 @@ jobs:
     needs: CheckTyphon
     name: Install packages
     runs-on: [self-hosted, typhon, dandi]
+    timeout-minutes: 7200  # 5 days, the documented maximum for self-hosted runners
 
     steps:
       - name: Install packages
@@ -46,7 +47,8 @@ jobs:
           recreate: ${{ inputs.recreate }}
 
   NotifyOnFailure:
-    if: ${{ always() && failure() }}  # 'always' for if any 'needs' are cancelled/skipped
+    # A job that times out, or waits a day in the queue for the runner, ends as cancelled rather than failed
+    if: ${{ always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}
     needs: [CheckTyphon, InstallPackages]
     runs-on: ubuntu-latest
     steps:

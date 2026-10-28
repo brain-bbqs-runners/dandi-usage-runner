@@ -33,6 +33,9 @@ temporary directory in place of `/tmp`.
 On a fresh runner, dispatching the install workflow downloads `uv` and creates the environment, and the first summaries
 run clones [dandi/access-summaries](https://github.com/dandi/access-summaries) over SSH. The clone and its pushes use the
 runner user's own git credentials, so that user needs an SSH key with push access to it.
+Git runs SSH in batch mode there, so the key must not need a passphrase and `github.com` must already be in that user's
+`known_hosts`: a prompt fails the upload instead of waiting for an answer. To pick the key, name it in the user's
+`~/.ssh/config`, since the step's `GIT_SSH_COMMAND` takes precedence over git's `core.sshCommand`.
 
 Repository secrets:
 
@@ -46,17 +49,16 @@ Requester IPs to leave out are listed on the runner's host in the runner user's
 excluded addresses. The extraction drops their requests and every summaries workflow leaves them out, so no repository
 secret is needed.
 
-```text
-192.0.2.1  # Drogon
-192.0.2.2  # Drogon
-```
-
 Only exact addresses are accepted. Networks in CIDR notation and patterns are refused with an error. An absent or
 empty file leaves no one out.
 
-The scan workflow checks the cache for requests of listed addresses extracted before they were listed, and the remove
-workflow deletes any it finds. The removal is permanent. Taking an address off the list afterwards does not bring its
-requests back, so un-excluding one needs a full re-extraction.
+Exclusion only works in one direction over time. Adding an address drops its requests from future extraction and,
+once the remove workflow has run, from the cache. Removing an address from the file does not bring its requests back,
+since they were never extracted or were deleted. To include an address again, the extraction has to be rerun from
+scratch (`reset extraction`, then a full `extract`).
+
+The scan workflow checks the cache for any of their requests extracted before they were listed, and fails if it finds
+any. The remove workflow then deletes them from the cache.
 
 The inventory sync and the restic snapshot use what the runner's host already has: its own AWS credentials for
 `s3://dandiarchive-inventory`, and `snapshots/restic` with its password file under `/mnt/s3-logs/dandi-s3-logs`.
