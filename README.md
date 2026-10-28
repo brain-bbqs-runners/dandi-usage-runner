@@ -18,6 +18,7 @@ and the pre-run check through [CodyCBakerPhD/check-runner-action](https://github
 | Update DANDI summaries | Sundays, Wednesdays and Saturdays, 06:00 UTC |
 | Update microscopy summaries (DANDI:000108) | Mondays, 06:00 UTC |
 | Update unassociated DANDI summaries | 1st of each month, 03:00 UTC |
+| Scan DANDI extraction cache for excluded IPs (`validate excluded`, which fails, and so emails, if the cache still holds their requests) | Manual dispatch only |
 
 ## Configuration
 
@@ -53,6 +54,9 @@ empty file leaves no one out.
 Exclusion only works in one direction over time. Adding an address drops its requests from future extraction.
 Removing an address from the file does not bring its requests back, since they were never extracted. To include an
 address again, the extraction has to be rerun from scratch (`reset extraction`, then a full `extract`).
+
+The scan workflow checks the cache for any of their requests extracted before they were listed, and fails if it finds
+any.
 
 The inventory sync and the restic snapshot use what the runner's host already has: its own AWS credentials for
 `s3://dandiarchive-inventory`, and `snapshots/restic` with its password file under `/mnt/s3-logs/dandi-s3-logs`.
