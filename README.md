@@ -44,11 +44,6 @@ Requester IPs to leave out are listed on the runner's host in the runner user's
 excluded addresses. The extraction drops their requests and every summaries workflow leaves them out, so no repository
 secret is needed.
 
-```text
-192.0.2.1  # Drogon
-192.0.2.2  # Drogon
-```
-
 Only exact addresses are accepted. Networks in CIDR notation and patterns are refused with an error. An absent or
 empty file leaves no one out.
 
